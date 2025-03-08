@@ -39,6 +39,7 @@ class MainActivity : ComponentActivity() {
             {
                 Text(text = "First Commit", fontSize = 26.sp )
                 Text(text = "Second Commit", fontSize = 26.sp )
+                Text(text = "Third Commit", fontSize = 26.sp ) // from Laptop
             }
 
         }
