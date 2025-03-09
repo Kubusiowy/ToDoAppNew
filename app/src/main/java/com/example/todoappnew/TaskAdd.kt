@@ -108,13 +108,13 @@ fun TaskAddScreen()
             {
                 items(ColorEnum.values()) { colorEnum ->
                     androidx.compose.material3.Button(onClick = { CardColor = colorEnum},
-                        modifier = Modifier.padding(8.dp).size(50.dp).border(1.dp, color = Color.Black, shape = CircleShape), shape = CircleShape,
-                        colors = ButtonDefaults.buttonColors(containerColor = colorEnum.color)
-                            ){
-
-
-                    }
-
+                        modifier = Modifier.padding(8.dp).size(50.dp).border(
+                            width = if (CardColor == colorEnum) 3.dp else 1.dp,
+                            color = if (CardColor == colorEnum) Color.Black else Color.Transparent,
+                            shape = CircleShape)
+                        ,shape = CircleShape
+                        , colors = ButtonDefaults.buttonColors(containerColor = colorEnum.color)
+                            ){}
                 }
 
             }
