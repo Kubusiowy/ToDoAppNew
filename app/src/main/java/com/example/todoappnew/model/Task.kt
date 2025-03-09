@@ -1,15 +1,16 @@
 package com.example.todoappnew.model
 
 import androidx.compose.ui.graphics.Color
+import java.io.Serializable
 import java.util.UUID
 
 data class Task(
     val title:String,
     val description:String,
     val colorType:ColorEnum
-)
+): Serializable
 
-enum class ColorEnum(color:Color){
+enum class ColorEnum(val color:Color){
     RED(Color.Red),
     GREEN(Color.Green),
     BLUE(Color.Blue),
@@ -19,6 +20,5 @@ enum class ColorEnum(color:Color){
     CYAN(Color.Cyan),
     MAGENTA(Color.Magenta),
     GRAY(Color.Gray),
-    TRANSPARENT(Color.Transparent),
 
 }
