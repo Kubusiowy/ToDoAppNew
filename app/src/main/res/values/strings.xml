@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">ToDoAppNew</string>
+    <string name="title_activity_task_add">TaskAdd</string>
 </resources>
