@@ -47,17 +47,12 @@ import androidx.core.content.ContextCompat.startActivity
 import com.example.todoappnew.model.ColorEnum
 import com.example.todoappnew.model.Task
 import com.example.todoappnew.ui.theme.ToDoAppNewTheme
-import com.example.todoappnew.util.StorageOperations
+
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 var taskList = mutableStateListOf<Task>()
 
-fun removeTask(task:Task,context: Context)
-{
-    taskList.remove(task)
-    StorageOperations.writeTaskList(context,taskList)
-}
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -68,12 +63,12 @@ class MainActivity : ComponentActivity() {
             val systemUiController = rememberSystemUiController()
             systemUiController.setSystemBarsColor(color = Black)
 
-            taskList = StorageOperations.readTaskList(this).toMutableStateList()
+
 
             val taskFromIntent = intent.getSerializableExtra("Task") as? Task
             taskFromIntent?.let{
                 taskList.add(it)
-                StorageOperations.writeTaskList(this,taskList)
+
             }
 
             ScreenView()
@@ -128,14 +123,14 @@ fun TasksShow(context:Context)
         )
         {
             items(taskList) { task ->
-                TaskCard(task, onDelete = {removeTask(task,context)})
+                TaskCard(task)
 
             }
         }
 }
 
 @Composable
-fun TaskCard(TaskItem:Task, onDelete: () -> Unit)
+fun TaskCard(TaskItem:Task)
 {
     Card(modifier = Modifier.fillMaxWidth().padding(16.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 10.dp),
@@ -150,11 +145,7 @@ fun TaskCard(TaskItem:Task, onDelete: () -> Unit)
                 Spacer(modifier = Modifier.height(10.dp))
                 Text(text = TaskItem.description, fontSize = 20.sp, color = if(TaskItem.colorType.color == Color.Black || TaskItem.colorType.color == Color.Blue || TaskItem.colorType.color == Color.Gray) Color.White else Color.Black)
             }
-            Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete",
-                tint = if(TaskItem.colorType.color == Color.Black || TaskItem.colorType.color == Color.Blue || TaskItem.colorType.color == Color.Gray) Color.White else Color.Black,
-                modifier = Modifier.padding(16.dp).size(32.dp).clickable {
-                    onDelete()
-                })
+
         }
 
     }
