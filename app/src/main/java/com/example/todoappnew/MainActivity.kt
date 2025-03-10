@@ -47,6 +47,7 @@ import androidx.core.content.ContextCompat.startActivity
 import com.example.todoappnew.model.ColorEnum
 import com.example.todoappnew.model.Task
 import com.example.todoappnew.ui.theme.ToDoAppNewTheme
+import com.example.todoappnew.util.StorageOperations
 
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
@@ -59,7 +60,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-
+            taskList = StorageOperations.readTaskList(this).toMutableStateList()
             val systemUiController = rememberSystemUiController()
             systemUiController.setSystemBarsColor(color = Black)
 
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity() {
             val taskFromIntent = intent.getSerializableExtra("Task") as? Task
             taskFromIntent?.let{
                 taskList.add(it)
-
+                StorageOperations.writeTaskList(this, taskList)
             }
 
             ScreenView()
