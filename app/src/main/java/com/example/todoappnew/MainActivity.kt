@@ -44,16 +44,19 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
+import com.example.todoappnew.api.ServiceConfiguration
+import com.example.todoappnew.api.TaskNetworkRepository
 import com.example.todoappnew.model.ColorEnum
 import com.example.todoappnew.model.Task
 import com.example.todoappnew.ui.theme.ToDoAppNewTheme
 import com.example.todoappnew.util.StorageOperations
 
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
 var taskList = mutableStateListOf<Task>()
-
+val taskNetworkRepository =TaskNetworkRepository(ServiceConfiguration.taskService)
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -70,6 +73,10 @@ class MainActivity : ComponentActivity() {
             taskFromIntent?.let{
                 taskList.add(it)
                 StorageOperations.writeTaskList(this, taskList)
+
+                runBlocking {
+                taskNetworkRepository.addTask(it)
+                }
             }
 
             ScreenView()
