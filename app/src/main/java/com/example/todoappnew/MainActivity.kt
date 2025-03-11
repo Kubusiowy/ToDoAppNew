@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
-var taskList = mutableStateListOf<Task>()
+var taskList = mutableListOf<Task>()
 val taskNetworkRepository =TaskNetworkRepository(ServiceConfiguration.taskService)
 
 class MainActivity : ComponentActivity() {
@@ -73,27 +73,31 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-        lifecycleScope.launch {
-            try {
-                val tasksFromFirebase = taskNetworkRepository.getAllTasks()
-                taskList.clear() // 🔥 Usuwa stare zadania, zanim doda nowe
-                taskList.addAll(tasksFromFirebase)
-            } catch (e: Exception) {
-                Log.d("FIREBASE", "Błąd pobierania: ${e.message}")
-                val localTasks = StorageOperations.readTaskList(this@MainActivity)
-                taskList.clear()
-                taskList.addAll(localTasks)
+       val context = this
+
+        runBlocking{
+            try{
+                taskList = taskNetworkRepository.getAllTasks().toMutableList()
+            }catch (e:Exception)
+            {
+                taskList = StorageOperations.readTaskList(context).toMutableList()
             }
+
         }
 
-        // Obsługa nowo dodanego taska
-        val taskFromIntent = intent.getSerializableExtra("Task") as? Task
-        taskFromIntent?.let {
+        val task = intent.getSerializableExtra("Task") as? Task
+        task?.let{
             taskList.add(it)
             StorageOperations.writeTaskList(this, taskList)
 
-            lifecycleScope.launch {
-                taskNetworkRepository.addTask(it)
+            runBlocking {
+                try{
+                    taskNetworkRepository.addTask(it)
+                }catch (e:Exception)
+                {
+                    Log.e("MainActivity", "Błąd wysyłania zadania: ${e.message}")
+                    Toast.makeText(context,"Błąd wysyłania zadania",Toast.LENGTH_SHORT).show()
+                }
             }
         }
 
