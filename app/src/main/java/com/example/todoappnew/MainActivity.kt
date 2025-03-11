@@ -1,5 +1,8 @@
 package com.example.todoappnew
-
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
@@ -33,7 +36,9 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -44,6 +49,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
+import com.example.todoappnew.InternetManager.NoInternetScreenEssa
+import com.example.todoappnew.InternetManager.isInternetAvailable
 import com.example.todoappnew.api.ServiceConfiguration
 import com.example.todoappnew.api.TaskNetworkRepository
 import com.example.todoappnew.model.ColorEnum
@@ -52,6 +59,7 @@ import com.example.todoappnew.ui.theme.ToDoAppNewTheme
 import com.example.todoappnew.util.StorageOperations
 
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
@@ -62,12 +70,6 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        setContent {
-            taskList = StorageOperations.readTaskList(this).toMutableStateList()
-            val systemUiController = rememberSystemUiController()
-            systemUiController.setSystemBarsColor(color = Black)
-
-
 
             val taskFromIntent = intent.getSerializableExtra("Task") as? Task
             taskFromIntent?.let{
@@ -78,12 +80,39 @@ class MainActivity : ComponentActivity() {
                 taskNetworkRepository.addTask(it)
                 }
             }
+        setContent {
+            taskList = StorageOperations.readTaskList(this).toMutableStateList()
+            val systemUiController = rememberSystemUiController()
+            systemUiController.setSystemBarsColor(color = Black)
 
-            ScreenView()
+                MyApp()
+
         }
     }
 
 }
+
+
+@Composable
+fun MyApp()
+{
+
+    val context = LocalContext.current
+    var isConnected by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        while (true) {
+            isConnected = isInternetAvailable(context)
+            delay(2000)
+        }
+    }
+
+    if (isConnected) {
+        ScreenView()
+    } else {
+        NoInternetScreenEssa()
+    }
+}
+
 
 @Composable
 fun ScreenView()
