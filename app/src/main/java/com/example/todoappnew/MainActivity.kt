@@ -75,31 +75,7 @@ class MainActivity : ComponentActivity() {
 
         val context = this
 
-            runBlocking {
-                try {
-                    Log.d("json", "Próba pobrania tasków z API...")
-                    taskList = taskNetworkRepository.getAllTasks().toMutableStateList()
-
-                    if (taskList.isEmpty()) {
-                        throw Exception("Pobrano pustą listę, przechodzę do pamięci lokalnej")
-                    }
-
-                    Log.d("json", "Taski pobrane z API: $taskList")
-                    StorageOperations.writeTaskList(context, taskList)
-                    Log.d("json", "Taski zapisane do pamięci lokalnej")
-                } catch (e: Exception) {
-                    Log.e("json", "Błąd pobierania tasków z API: ${e.message}")
-
-                    val rawList = StorageOperations.readTaskList(context)
-                    Log.d("json", "Dane odczytane z pamięci lokalnej: $rawList")
-
-                    taskList = rawList.toMutableStateList()
-                    Log.d("json", "Taski przekonwertowane do MutableStateList: $taskList")
-
-                    Toast.makeText(context, "Taski pobrane z lokalnej pamięci", Toast.LENGTH_SHORT).show()
-                }
-
-        }
+        getAllTaskViaNetwork(context)
 
         val task = intent.getSerializableExtra("Task") as? Task
         task?.let {
@@ -108,16 +84,8 @@ class MainActivity : ComponentActivity() {
             taskList.add(it)
             Log.d("json", "TaskList po dodaniu nowego zadania: $taskList")
 
-            runBlocking {
-                try {
-                    Log.d("json", "Próba wysłania nowego zadania do API...")
-                    taskNetworkRepository.addTask(it)
-                    Log.d("json", "Zadanie wysłane do API")
-                } catch (e: Exception) {
-                    Log.e("MainActivity", "Błąd wysyłania zadania: ${e.message}")
-                    Toast.makeText(context, "Błąd wysyłania zadania", Toast.LENGTH_SHORT).show()
-                }
-            }
+            addTaskViaNetwork(it,context)
+
         }
 
         setContent {
@@ -126,6 +94,48 @@ class MainActivity : ComponentActivity() {
             ToDoAppNewTheme {
 
                 ScreenView()
+            }
+        }
+    }
+
+    private fun getAllTaskViaNetwork(context: Context)
+    {
+        runBlocking{
+            try {
+                Log.d("json", "Próba pobrania tasków z API...")
+                taskList = taskNetworkRepository.getAllTasks().toMutableStateList()
+
+                if (taskList.isEmpty()) {
+                    throw Exception("Pobrano pustą listę, przechodzę do pamięci lokalnej")
+                }
+
+                Log.d("json", "Taski pobrane z API: $taskList")
+                StorageOperations.writeTaskList(context, taskList)
+                Log.d("json", "Taski zapisane do pamięci lokalnej")
+            } catch (e: Exception) {
+                Log.e("json", "Błąd pobierania tasków z API: ${e.message}")
+
+                val rawList = StorageOperations.readTaskList(context)
+                Log.d("json", "Dane odczytane z pamięci lokalnej: $rawList")
+
+                taskList = rawList.toMutableStateList()
+                Log.d("json", "Taski przekonwertowane do MutableStateList: $taskList")
+
+                Toast.makeText(context, "Taski pobrane z lokalnej pamięci", Toast.LENGTH_SHORT).show()
+            }
+
+        }
+    }
+
+    private fun addTaskViaNetwork(task: Task,context: Context) {
+        runBlocking {
+            try {
+                Log.d("json", "Próba wysłania nowego zadania do API...")
+                taskNetworkRepository.addTask(task)
+                Log.d("json", "Zadanie wysłane do API")
+            } catch (e: Exception) {
+                Log.e("MainActivity", "Błąd wysyłania zadania: ${e.message}")
+                Toast.makeText(context, "Błąd wysyłania zadania", Toast.LENGTH_SHORT).show()
             }
         }
     }
