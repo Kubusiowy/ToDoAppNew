@@ -6,6 +6,8 @@ import androidx.compose.runtime.setValue
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
@@ -49,8 +51,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat.startActivity
-import com.example.todoappnew.InternetManager.NoInternetScreenEssa
-import com.example.todoappnew.InternetManager.isInternetAvailable
+import androidx.lifecycle.lifecycleScope
 import com.example.todoappnew.api.ServiceConfiguration
 import com.example.todoappnew.api.TaskNetworkRepository
 import com.example.todoappnew.model.ColorEnum
@@ -60,6 +61,7 @@ import com.example.todoappnew.util.StorageOperations
 
 import com.google.accompanist.systemuicontroller.rememberSystemUiController
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
@@ -71,47 +73,43 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-            val taskFromIntent = intent.getSerializableExtra("Task") as? Task
-            taskFromIntent?.let{
-                taskList.add(it)
-                StorageOperations.writeTaskList(this, taskList)
-
-                runBlocking {
-                taskNetworkRepository.addTask(it)
-                }
+        lifecycleScope.launch {
+            try {
+                val tasksFromFirebase = taskNetworkRepository.getAllTasks()
+                taskList.clear() // 🔥 Usuwa stare zadania, zanim doda nowe
+                taskList.addAll(tasksFromFirebase)
+            } catch (e: Exception) {
+                Log.d("FIREBASE", "Błąd pobierania: ${e.message}")
+                val localTasks = StorageOperations.readTaskList(this@MainActivity)
+                taskList.clear()
+                taskList.addAll(localTasks)
             }
+        }
+
+        // Obsługa nowo dodanego taska
+        val taskFromIntent = intent.getSerializableExtra("Task") as? Task
+        taskFromIntent?.let {
+            taskList.add(it)
+            StorageOperations.writeTaskList(this, taskList)
+
+            lifecycleScope.launch {
+                taskNetworkRepository.addTask(it)
+            }
+        }
+
         setContent {
-            taskList = StorageOperations.readTaskList(this).toMutableStateList()
             val systemUiController = rememberSystemUiController()
             systemUiController.setSystemBarsColor(color = Black)
+            ToDoAppNewTheme {
 
-                MyApp()
-
+                ScreenView()
+            }
         }
     }
 
 }
 
 
-@Composable
-fun MyApp()
-{
-
-    val context = LocalContext.current
-    var isConnected by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        while (true) {
-            isConnected = isInternetAvailable(context)
-            delay(2000)
-        }
-    }
-
-    if (isConnected) {
-        ScreenView()
-    } else {
-        NoInternetScreenEssa()
-    }
-}
 
 
 @Composable
