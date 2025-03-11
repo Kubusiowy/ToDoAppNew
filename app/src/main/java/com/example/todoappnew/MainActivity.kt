@@ -65,7 +65,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import org.intellij.lang.annotations.JdkConstants.HorizontalAlignment
 
-var taskList = mutableListOf<Task>()
+var taskList = mutableStateListOf<Task>()
 val taskNetworkRepository =TaskNetworkRepository(ServiceConfiguration.taskService)
 
 class MainActivity : ComponentActivity() {
@@ -73,30 +73,49 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
 
-       val context = this
+        val context = this
 
-        runBlocking{
-            try{
-                taskList = taskNetworkRepository.getAllTasks().toMutableList()
-            }catch (e:Exception)
-            {
-                taskList = StorageOperations.readTaskList(context).toMutableList()
-            }
+            runBlocking {
+                try {
+                    Log.d("json", "Próba pobrania tasków z API...")
+                    taskList = taskNetworkRepository.getAllTasks().toMutableStateList()
+
+                    if (taskList.isEmpty()) {
+                        throw Exception("Pobrano pustą listę, przechodzę do pamięci lokalnej")
+                    }
+
+                    Log.d("json", "Taski pobrane z API: $taskList")
+                    StorageOperations.writeTaskList(context, taskList)
+                    Log.d("json", "Taski zapisane do pamięci lokalnej")
+                } catch (e: Exception) {
+                    Log.e("json", "Błąd pobierania tasków z API: ${e.message}")
+
+                    val rawList = StorageOperations.readTaskList(context)
+                    Log.d("json", "Dane odczytane z pamięci lokalnej: $rawList")
+
+                    taskList = rawList.toMutableStateList()
+                    Log.d("json", "Taski przekonwertowane do MutableStateList: $taskList")
+
+                    Toast.makeText(context, "Taski pobrane z lokalnej pamięci", Toast.LENGTH_SHORT).show()
+                }
 
         }
 
         val task = intent.getSerializableExtra("Task") as? Task
-        task?.let{
+        task?.let {
+            Log.d("json", "Nowe zadanie dodane: $it")
+
             taskList.add(it)
-            StorageOperations.writeTaskList(this, taskList)
+            Log.d("json", "TaskList po dodaniu nowego zadania: $taskList")
 
             runBlocking {
-                try{
+                try {
+                    Log.d("json", "Próba wysłania nowego zadania do API...")
                     taskNetworkRepository.addTask(it)
-                }catch (e:Exception)
-                {
+                    Log.d("json", "Zadanie wysłane do API")
+                } catch (e: Exception) {
                     Log.e("MainActivity", "Błąd wysyłania zadania: ${e.message}")
-                    Toast.makeText(context,"Błąd wysyłania zadania",Toast.LENGTH_SHORT).show()
+                    Toast.makeText(context, "Błąd wysyłania zadania", Toast.LENGTH_SHORT).show()
                 }
             }
         }
